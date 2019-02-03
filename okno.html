@@ -95,8 +95,9 @@
 
     <div class="tabContainer">
         <div class="buttonContainer">
-            <button onclick="designer()">Дизайнер</button>
+            <button onclick="showPanel(0, '#f0f0f0')">Дизайнер</button>
             <button onclick="draw3D()">3D проекция</button>
+            <button onclick="showPanel(2, '#f0f0f0')">Развертка</button>
         </div>
         <div class="tabPanel">
             <svg id="mysvg"></svg>
@@ -104,15 +105,14 @@
         <div class="tabPanel">
             <div id="scene3D"></div>
         </div>
+        <div class="tabPanel">
+            <svg id="mysvg2"></svg>
+        </div>
     </div>
 
     <script type="text/javascript">
         var tabButtons = document.querySelectorAll(".tabContainer .buttonContainer button");
         var tabPanels = document.querySelectorAll(".tabContainer .tabPanel");
-
-        function designer() {
-            showPanel(0, '#f0f0f0');
-        }
 
         function draw3D() {
             ConstrDraw.draw3D();
