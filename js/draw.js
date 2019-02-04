@@ -294,6 +294,23 @@ function Draw() {
                                     linePaintedBot.remove();
                                     linePaintedBot = drawRedLines(gLines, 2);
                                 }
+                                //Перерисовываем подгибы если были включены
+                                //Подгиб слева
+                               if (podgibLeftTop) {
+                                if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
+                                linePodgibLeft = drawPodgibs(gLines[0], 1, 'left');
+                                } else if (podgibLeftBottom) {
+                                    if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
+                                    linePodgibLeft = drawPodgibs(gLines[0], 2, 'left');
+                                }
+                                //Подгиб справа
+                                if (podgibRightTop) {
+                                    if (linePodgibRight != undefined) { linePodgibRight.remove(); }
+                                    linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 1, 'right');
+                                } else if (podgibRightBottom) {
+                                    if (linePodgibRight != undefined) { linePodgibRight.remove(); }
+                                    linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 2, 'right');
+                                }
 
 
                                 //Расставляем текст по новым координатам
@@ -388,7 +405,7 @@ function Draw() {
 
     this.drawPodgibRightLines = function (pos) {
         if (finished) {
-            //Подгиб слева
+            //Подгиб справа
             if (pos == 1) {
                 podgibRightTop = true;
                 podgibRightBottom = false;
@@ -707,7 +724,7 @@ function Draw() {
 
 
     this.remove = function () {
-        $('mysvg').remove();
+        $('mysvg').remove();       
     };
     var remove = this.remove;
 
