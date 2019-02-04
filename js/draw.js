@@ -1,3 +1,8 @@
+//Глобальные размеры
+var glob_width = 0;
+var glob_height = 0;
+
+//Класс КОНСТРУКТОР ОТКОСА
 function Draw() {
     var S = Snap("#mysvg");
     //Эти три строчки для преобразования координат svg что бы координаты мышки были равны координатам svg холста а не всего экрана
@@ -14,12 +19,33 @@ function Draw() {
         id: "canvas"
     });
 
+    glob_width = S.node.clientWidth;
+    glob_height = S.node.clientHeight;
+
 
     this.run = function () {
-        console.log('Run');
+        console.log('Run main');
+    };
+
+    this.remove = function () {
+        $('#mysvg').remove();
+        $("#pnl1").append("<svg id=mysvg></svg>");
     };
 
 
+    //Массив с линиями
+    var gLines = [];
+    this.gLines = gLines;
+    //Флаги о включенных линиях покраски
+    var topPainted = false;
+    var botPainted = false;
+    this.topPainted = topPainted;
+    this.botPainted = botPainted;
+    //Флаги о включенных подгибах
+    var podgibLeftTop = false;
+    var podgibLeftBottom = false;
+    var podgibRightTop = false;
+    var podgibRightBottom = false;
     //Координаты мыши, переприсваиваются всегда при движении по холсту S
     var mouseX;
     var mouseY;
@@ -40,23 +66,15 @@ function Draw() {
     //Текст
     var lineLength;
     var angle = 0;
+    //Подтверждение конца рисования
     var finished = false;
+    this.finished = finished;
     //Отступ текста от линии
     var maxLength = 1250;
     var lengthSumm = 0;
     //Массив с путями линий для проверки на пересечение
     var vectorPathes = [];
     var lastPath;
-    //Массив с линиями
-    var gLines = [];
-    //Флаги о включенных линиях покраски
-    var topPainted = false;
-    var botPainted = false;
-    //Флаги о включенных подгибах
-    var podgibLeftTop = false;
-    var podgibLeftBottom = false;
-    var podgibRightTop = false;
-    var podgibRightBottom = false;
     //Линии подгиба
     var linePodgibLeft;
     var linePodgibRight;
@@ -80,12 +98,10 @@ function Draw() {
     //Отступ текста размеров
     var otstypText = 6;
     //................................................
-    var SCENE_WIDTH = 762;
-    var SCENE_HEIGHT = 510;
 
     //При наведении на линию показываем красный
     function addRed() {
-        if (finished) {
+        if (ConstrDraw.finished) {
             //Показываем курсор
             document.body.style.cursor = 'pointer';
             this.attr({ stroke: "red" });
@@ -94,7 +110,7 @@ function Draw() {
 
     //При ухода с линии показываем черный
     function addBlack() {
-        if (finished) {
+        if (ConstrDraw.finished) {
             //Показываем стрелку
             document.body.style.cursor = 'default';
             this.attr({ stroke: "black" });
@@ -235,8 +251,8 @@ function Draw() {
     }
 
     //Создаем новое рисование или продолжаем 
-    var clickCallbackSnap = function (event) {
-        if (!finished) {
+    clickCallbackSnap = function (event) {
+        if (!ConstrDraw.finished) {
             //Убираем курсор
             // document.body.style.cursor = 'none';
             //Создаем новый комплект
@@ -247,7 +263,7 @@ function Draw() {
 
     // Обработчик клика по элементу "Линия"
     var clickCallbackLine = function (event) {
-        if (finished) {
+        if (ConstrDraw.finished) {
             //Старая длина отрезка
             var lenAB = Math.round(Math.sqrt(Math.pow(this.attr('x2') - this.attr('x1'), 2) + Math.pow(this.attr('y2') - this.attr('y1'), 2)));
             var length = prompt("Введите новую длинну...", "");
@@ -286,19 +302,19 @@ function Draw() {
                                     gLines[k].attr({ 'x1': cx1, 'y1': cy1, 'x2': cx2, 'y2': cy2 });
                                 }
                                 //В зависимости от флага перерисовываем линии покраски если они были включены
-                                if (topPainted) {
+                                if (ConstrDraw.topPainted) {
                                     linePaintedTop.remove();
                                     linePaintedTop = drawRedLines(gLines, 1);
                                 }
-                                if (botPainted) {
+                                if (ConstrDraw.botPainted) {
                                     linePaintedBot.remove();
                                     linePaintedBot = drawRedLines(gLines, 2);
                                 }
                                 //Перерисовываем подгибы если были включены
                                 //Подгиб слева
-                               if (podgibLeftTop) {
-                                if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
-                                linePodgibLeft = drawPodgibs(gLines[0], 1, 'left');
+                                if (podgibLeftTop) {
+                                    if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
+                                    linePodgibLeft = drawPodgibs(gLines[0], 1, 'left');
                                 } else if (podgibLeftBottom) {
                                     if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
                                     linePodgibLeft = drawPodgibs(gLines[0], 2, 'left');
@@ -377,22 +393,19 @@ function Draw() {
     //Завершаем рисование и отрисовываем полученные линии и тексты в правильном порядке
     this.drawFinish = function () {
         console.log('Finish');
-        //Показываем курсор и reboot() Только в случае когда тыкнули в холст только один первый раз
+        //Показываем курсор и rebootDraw() Только в случае когда тыкнули в холст только один первый раз
         document.body.style.cursor = 'default';
         //Убираем недорисованные элементы
         if (textAngle != undefined) {
-            if (!finished) {
+            if (!this.finished) {
                 line.remove();
                 textAngle.remove();
                 textLength.remove();
                 firstClick = false;
-                finished = true;
+                this.finished = true;
                 arrTxt = drawText(gLines);
             }
         } else {
-            while (scene.children.length > 0) {
-                scene.remove(scene.children[0]);
-            }
             reboot();
         }
     }
@@ -404,7 +417,7 @@ function Draw() {
     }
 
     this.drawPodgibRightLines = function (pos) {
-        if (finished) {
+        if (this.finished) {
             //Подгиб справа
             if (pos == 1) {
                 podgibRightTop = true;
@@ -429,7 +442,7 @@ function Draw() {
 
 
     this.drawPodgibLeftLines = function (pos) {
-        if (finished) {
+        if (this.finished) {
             //Подгиб слева
             if (pos == 1) {
                 podgibLeftTop = true;
@@ -448,34 +461,36 @@ function Draw() {
     this.removeDrawPaintedLines = function () {
         if (linePaintedTop != undefined) { linePaintedTop.remove(); }
         if (linePaintedBot != undefined) { linePaintedBot.remove(); }
-        topPainted = false;
-        botPainted = false;
+        this.topPainted = false;
+        this.botPainted = false;
+        //Обновляем 3D сцену
+        Scene3D.drawScene3D(gLines);
     }
 
     this.drawPaintLines = function (pos) {
-        if (finished) {
-            //В зависимости от положения ставим флаги в положение включено и рисуем
+        if (this.finished) {
+            //В зависимости от положения ставим флаги в положение включено и рисуем линии покраски
             if (pos == 1) {
-                topPainted = true;
-                botPainted = false;
+                this.topPainted = true;
+                this.botPainted = false;
                 if (linePaintedTop != undefined) { linePaintedTop.remove(); }
                 if (linePaintedBot != undefined) { linePaintedBot.remove(); }
                 linePaintedTop = drawRedLines(gLines, 1);
             } else if (pos == 2) {
-                botPainted = true;
-                topPainted = false;
+                this.botPainted = true;
+                this.topPainted = false;
                 if (linePaintedTop != undefined) { linePaintedTop.remove(); }
                 if (linePaintedBot != undefined) { linePaintedBot.remove(); }
                 linePaintedBot = drawRedLines(gLines, 2);
             } else if (pos == 3) {
-                topPainted = true;
+                this.topPainted = true;
                 if (linePaintedTop != undefined) { linePaintedTop.remove(); }
                 linePaintedTop = drawRedLines(gLines, 1);
-                botPainted = true;
+                this.botPainted = true;
                 if (linePaintedBot != undefined) { linePaintedBot.remove(); }
                 linePaintedBot = drawRedLines(gLines, 2);
             }
-            drawScene3D(gLines);
+            Scene3D.drawScene3D(gLines);
         }
     }
 
@@ -721,36 +736,126 @@ function Draw() {
         var pth = S.path('M' + newX + ',' + newY + 'Q' + cnt_xz + ',' + cnt_yz + ',' + xz + ',' + yz + 'L' + xz2 + ',' + yz2).attr({ stroke: "black", fill: "transparent", strokeWidth: 2 });
         return pth;
     }
+}
+
+
+
+
+
+
+//Класс РАЗВЕРТКА
+function DrawRazvertka() {
+    var S = Snap("#mysvg2");
+    //Эти три строчки для преобразования координат svg что бы координаты мышки были равны координатам svg холста а не всего экрана
+    var mySvg = $("#mysvg2")[0];
+    var pt = mySvg.createSVGPoint(); // create the point;
+    var transformed;
+
+    this.S = S;
+    //холст
+    var Points = [0, 0, glob_width, 0, glob_width, glob_height, 0, glob_height];
+    S.polygon().attr({
+        points: Points,
+        fill: "#f0f0f0",
+        id: "canvas"
+    });
+
+
+    this.run = function () {
+        console.log('Run razvertka');
+    };
 
 
     this.remove = function () {
-        $('mysvg').remove();       
+        $('#mysvg2').remove();
+        $("#pnl3").append("<svg id=mysvg2></svg>");
     };
-    var remove = this.remove;
+
+}
 
 
-    this.draw3D = function () {
-        drawScene3D(gLines);
+
+
+
+
+
+
+
+
+//Класс 3D
+function Draw3D() {
+    //Создаем 3D окно 
+    var SCENE_WIDTH = glob_width;
+    var SCENE_HEIGHT = glob_height;
+    var scene = new THREE.Scene();
+    var font;
+
+    scene.background = new THREE.Color("#f0f0f0");
+    var camera = new THREE.PerspectiveCamera(75, SCENE_WIDTH / SCENE_HEIGHT, 1, 1000);
+    camera.position.set(15, 0, 40);
+
+    var renderer = new THREE.WebGLRenderer({
+        antialias: true
+    });
+    renderer.setSize(SCENE_WIDTH, SCENE_HEIGHT);
+
+    var scene3d = document.getElementById("scene3D");
+    scene3d.appendChild(renderer.domElement);
+
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target = new THREE.Vector3(10, 0, 10);
+    controls.update();
+
+    loadFont();
+    render();
+
+    function render() {
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
     }
 
-    function drawScene3D(lines) {
+    this.run = function () {
+        console.log('Run 3d');
+    };
+
+    this.remove = function () {
+        $('#scene3D').remove();
+        $("#pnl2").append("<div id=scene3D></div>");
+    };
+
+    this.drawModel = function () {
+        Scene3D.drawScene3D(ConstrDraw.gLines);
+    }
+
+    function loadFont() {
+        var loader = new THREE.FontLoader();
+        loader.load('fonts/Calibri_Regular.json', function (res) {
+            font = res;
+        });
+    }
+
+    this.drawScene3D = function (lines) {
+        //Удаляем старую модель
+        while (scene.children.length > 0) {
+            scene.remove(scene.children[0]);
+        }
         //Если закончили рисование то разрешаем показать 3D модель
-        if (finished) {
-            if (topPainted) {
+        if (ConstrDraw.finished) {
+            if (ConstrDraw.topPainted) {
                 clrFront = "red";
                 clrBack = "grey";
-            }  
-            if (botPainted) {
+            }
+            if (ConstrDraw.botPainted) {
                 clrBack = "red";
                 clrFront = "grey";
-            }  
-            if (topPainted && botPainted){
+            }
+            if (ConstrDraw.topPainted && ConstrDraw.botPainted) {
                 clrFront = "red";
                 clrBack = "red";
-            } else if (!topPainted && !botPainted){
+            } else if (!ConstrDraw.topPainted && !ConstrDraw.botPainted) {
                 clrFront = "grey";
                 clrBack = "grey";
-            } 
+            }
             //Координаты обводки модели
             var arr = [];
             //Сама модель
@@ -761,10 +866,10 @@ function Draw() {
 
                 if (i == 0) {
                     points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 0));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 10));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 10));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 50));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
                 } else {
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 10));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
                 }
             }
 
@@ -840,15 +945,15 @@ function Draw() {
             var materialBack2 = new THREE.MeshBasicMaterial({ color: clrBack, side: THREE.FrontSide });
 
             //Устанавливаем индексы цветов для лиц
-            var count=1;
+            var count = 1;
             for (var i = 0; i < geom.faces.length; i++) {
-                if (count > 4){count = 1}
-                if (count <= 4) {                   
-                    geom.faces[i].materialIndex = count-1;
+                if (count > 4) { count = 1 }
+                if (count <= 4) {
+                    geom.faces[i].materialIndex = count - 1;
                     count++
                 }
             }
-            
+
             //Находим коробку в которой находится модель
             geom.computeBoundingBox();
             var center = new THREE.Vector3();
@@ -866,10 +971,34 @@ function Draw() {
             // Добавляем геометрию обводки модели на сцену
             scene.add(linePavement);
 
-            var mesh = new THREE.Mesh(geom, [materialFront1, materialFront2, materialBack1, materialBack2]); 
+            var mesh = new THREE.Mesh(geom, [materialFront1, materialFront2, materialBack1, materialBack2]);
             // Добавляем геометрию и материал на сцену
             scene.add(mesh);
-            
+
+
+            var textGeo = new THREE.TextGeometry('FUCK YOU', {
+                font: font,
+                size: 10,
+                height: 2,
+                curveSegments: 10,
+                weight: "normal",
+                bevelThickness: 1,
+                bevelSize: 0.3,
+                bevelSegments: 3,
+                bevelEnabled: false
+            });
+            textGeo.computeBoundingBox();
+            textGeo.computeVertexNormals();
+
+            var cubeMat = new THREE.MeshLambertMaterial({ color: 0xff3300 });
+            var text = new THREE.Mesh(textGeo, cubeMat);
+
+            scene.add(text);
+
+
+
+
+
             //Показываем
             render();
 
@@ -880,12 +1009,5 @@ function Draw() {
             scene.background = new THREE.Color("#f0f0f0");
             render();
         }
-
     }
-
-    function render() {
-        requestAnimationFrame(render);
-        renderer.render(scene, camera);
-    }
-
 }
