@@ -49,6 +49,12 @@ function Draw() {
     var lastPath;
     //Массив с линиями
     var gLines = [];
+    // группа линий
+    var gLinesGroup = S.group();
+    // массив с биссектрисами углов
+    var angleLines = [];
+    // массив с углами
+    var angleArr = [];
     //Флаги о включенных линиях покраски
     var topPainted = false;
     var botPainted = false;
@@ -65,6 +71,8 @@ function Draw() {
     var linePaintedBot;
     //Массив с объектами Текст длины
     var arrTxt;
+    // коэфф на который следует увеличить рисунок (в размер холста), рассчитывается при окончании рисования
+    var minK; 
 
     //Параметры.......................................:
     //Отступ линий покраски
@@ -111,6 +119,7 @@ function Draw() {
         else if (angle > 1) t = 1;
         return Math.round(Math.acos(-angle) * 180 / Math.PI);
     }
+
 
     //Рисуем новую линию
     function createNew() {
@@ -185,6 +194,7 @@ function Draw() {
                 //Убираем пунктир
                 line.attr({ strokeDasharray: 0 });
                 //Сохраняем массив с линиями для перерисовки
+                gLinesGroup.append(line);
                 gLines.push(line);
                 //Стираем предыдущий текст после каждого клика
                 if (textLength != undefined) {
@@ -200,10 +210,33 @@ function Draw() {
                 textAngle = S.text(mouseX - 5, mouseY + 20, "Угол: " + angle + "\u00B0");
                 textLength = S.text(mouseX - 5, mouseY + 35, "Длина: " + lineLength + "мм");
 
-                // //Рисуем угол
-                // if ((angle != 0) && (vectorPathes.length > 0)) {
-                //     S.text(firstX, firstY, angle + "\u00B0");
-                // }
+                //Рисуем угол
+                if ((angle != 0) && (vectorPathes.length > 0)) {
+
+                    var p1x = parseInt(gLines[gLines.length - 1].attr('x2'), 10);
+                    var p1y = parseInt(gLines[gLines.length - 1].attr('y2'), 10);
+                    var p2x = parseInt(gLines[gLines.length - 1].attr('x1'), 10);
+                    var p2y = parseInt(gLines[gLines.length - 1].attr('y1'), 10);
+                    var vectorLen = Math.sqrt((p1x - p2x) * (p1x - p2x) + (p1y - p2y) * (p1y - p2y));
+                    var angleSkoba = 30;
+                    var alpha = vectorLen / angleSkoba;
+                    var xZasech = (p1x + alpha * p2x) / (1 + alpha);
+                    var yZasech = (p1y + alpha * p2y) / (1 + alpha);
+
+                    var p1x2 = parseInt(gLines[gLines.length - 2].attr('x1'), 10);
+                    var p1y2 = parseInt(gLines[gLines.length - 2].attr('y1'), 10);
+                    var p2x2 = parseInt(gLines[gLines.length - 2].attr('x2'), 10);
+                    var p2y2 = parseInt(gLines[gLines.length - 2].attr('y2'), 10);
+                    var vectorLen2 = Math.sqrt((p1x2 - p2x2) * (p1x2 - p2x2) + (p1y2 - p2y2) * (p1y2 - p2y2));
+                    var alpha2 = vectorLen2 / angleSkoba;
+                    var xZasech2 = (p1x2 + alpha2 * p2x2) / (1 + alpha2);
+                    var yZasech2 = (p1y2 + alpha2 * p2y2) / (1 + alpha2);
+
+                    var biss = S.line(p2x, p2y, ((xZasech + xZasech2) / 2), ((yZasech + yZasech2) / 2)).attr({ stroke: 'none', strokeWidth: "1", angle: angle });
+                    angleLines.push(biss);
+                    gLinesGroup.append(biss);
+                }
+
                 //Сохраняем в массив путей, другие линии будем проверять с этим массивом на пересечения путей
                 vectorPathes.push(lastPath);
                 //Даем возможность показать текст угла
@@ -272,7 +305,6 @@ function Draw() {
                                 if (gLines[i] != undefined) {
                                     gLines[i].attr({ 'x2': xz, 'y2': yz });
                                 }
-
                                 //Проходим по  остальным отрезкам и увеличить их начальные и конечные координаты, для смещения
                                 var idx = i + 1;
                                 for (var k = idx; k < gLines.length; k++) {
@@ -295,13 +327,12 @@ function Draw() {
                                     linePaintedBot = drawRedLines(gLines, 2);
                                 }
 
-
                                 //Расставляем текст по новым координатам
                                 for (var z = 0; z < arrTxt.length; z++) {
                                     //Удаляем все старые тексты длин
                                     arrTxt[z].remove();
                                 }
-                                arrTxt = drawText(gLines);
+                                arrTxt = drawText(gLines, 1);
                                 break;
                             }
                         }
@@ -362,6 +393,7 @@ function Draw() {
         console.log('Finish');
         //Показываем курсор и reboot() Только в случае когда тыкнули в холст только один первый раз
         document.body.style.cursor = 'default';
+        
         //Убираем недорисованные элементы
         if (textAngle != undefined) {
             if (!finished) {
@@ -370,7 +402,10 @@ function Draw() {
                 textLength.remove();
                 firstClick = false;
                 finished = true;
-                arrTxt = drawText(gLines);
+                imageCenterAndScale();
+                arrTxt = drawText(gLines, 1);
+                drawText(angleLines, 2);
+                
             }
         } else {
             while (scene.children.length > 0) {
@@ -547,11 +582,19 @@ function Draw() {
         }
         //Рисуем общий путь
         var linePainted = S.path(path).attr({ stroke: 'red', fill: 'none', strokeLinecap: "round", strokeWidth: widthLinePainted, strokeDasharray: dashLinePainted });
+        linePainted.transform('s'+minK+','+minK+','+ S.node.clientWidth/2 + ',' + S.node.clientHeight/2 + '');
         return linePainted;
     }
 
 
-    function drawText(l) {
+    /*
+    * отрисовка длин отрезков
+    * и углов
+    * l - массив с данными
+    * p = 1 - отрисовка отрезков
+    * p = 2 - углов
+    */
+    function drawText(l, p) {
         var x, y;
         var zbp;
         var length;
@@ -575,51 +618,140 @@ function Draw() {
             lineLength = Math.round(Math.sqrt(Math.pow(l[i].attr('x1') - l[i].attr('x2'), 2) + Math.pow(l[i].attr('y1') - l[i].attr('y2'), 2)));//l[i].getTotalLength();
             //Находим середину линии
             halfLen = Math.round(lineLength / 2);
-            //Ставим текст по центру линии
-            txt = S.text(xz, yz, Math.round(lineLength)).attr({ fontFamily: 'Calibri', fontSize: 12 });
+            //Ставим текст по центру линии 
+            if(p == 1){
+                txt = S.text(xz, yz, Math.round(lineLength)).attr({ fontFamily: 'Calibri', fontSize: 12 });
+            }
+            else{
+                txt = S.text(xz, yz, Math.round(l[i].attr('angle')) + "\u00B0").attr({ fontFamily: 'Calibri', fontSize: 10});
+            }
+            gLinesGroup.append(txt);
             arrTxt.push(txt);
             bbox = txt.getBBox();
             //Находим середину текста
             dx = Math.round(bbox.width / 2);
+            dy = Math.round(bbox.height / 2);
             pth = S.path("M" + l[i].attr('x1') + "," + l[i].attr('y1') + "L" + l[i].attr('x2') + "," + l[i].attr('y2'));
+            if (p == 1) {
+                if (parseInt(l[i].attr('x2')) > parseInt(l[i].attr('x1'))) {
+                    //Получаем новые координаты учитывая смещение на половину ширины текста
+                    zbp = pth.getPointAtLength(halfLen - dx);
+                    //Получаем новые координаты для текста
+                    x = parseInt(zbp.x) + parseInt(l[i].attr('y2') - l[i].attr('y1'));
+                    y = parseInt(zbp.y) + (-(l[i].attr('x2') - l[i].attr('x1')));
+                    //Новая длина вектора
+                    length = otstypText;
+                    lenAB = Math.round(Math.sqrt(Math.pow(x - zbp.x, 2) + Math.pow(y - zbp.y, 2)));
+                    length = length - lenAB;
+                    //Новые координаты конца вектра учитывая новую длину
+                    xz = Math.round(x + (x - zbp.x) / lenAB * length);
+                    yz = Math.round(y + (y - zbp.y) / lenAB * length);
 
-            if (parseInt(l[i].attr('x2')) > parseInt(l[i].attr('x1'))) {
-                //Получаем новые координаты учитывая смещение на половину ширины текста
-                zbp = pth.getPointAtLength(halfLen - dx);
-                //Получаем новые координаты для текста
-                x = parseInt(zbp.x) + parseInt(l[i].attr('y2') - l[i].attr('y1'));
-                y = parseInt(zbp.y) + (-(l[i].attr('x2') - l[i].attr('x1')));
-                //Новая длина вектора
-                length = otstypText;
-                lenAB = Math.round(Math.sqrt(Math.pow(x - zbp.x, 2) + Math.pow(y - zbp.y, 2)));
-                length = length - lenAB;
-                //Новые координаты конца вектра учитывая новую длину
-                xz = Math.round(x + (x - zbp.x) / lenAB * length);
-                yz = Math.round(y + (y - zbp.y) / lenAB * length);
+                    txt.attr({ 'x': xz, 'y': yz });
+                    txt.transform("r" + (180 + Snap.angle(l[i].attr('x1'), l[i].attr('y1'), l[i].attr('x2'), l[i].attr('y2'))) + "," + xz + ',' + yz);
 
-                txt.attr({ 'x': xz, 'y': yz });
-                txt.transform("r" + (180 + Snap.angle(l[i].attr('x1'), l[i].attr('y1'), l[i].attr('x2'), l[i].attr('y2'))) + "," + xz + ',' + yz);
+                } else if (parseInt(l[i].attr('x2')) < parseInt(l[i].attr('x1'))) {
+                    zbp = pth.getPointAtLength(halfLen + dx);
+                    //Получаем новые координаты для текста
+                    x = parseInt(zbp.x) - parseInt(l[i].attr('y2') - l[i].attr('y1'));
+                    y = parseInt(zbp.y) - (-(l[i].attr('x2') - l[i].attr('x1')));
 
-            } else if (parseInt(l[i].attr('x2')) < parseInt(l[i].attr('x1'))) {
-                zbp = pth.getPointAtLength(halfLen + dx);
-                //Получаем новые координаты для текста
-                x = parseInt(zbp.x) - parseInt(l[i].attr('y2') - l[i].attr('y1'));
-                y = parseInt(zbp.y) - (-(l[i].attr('x2') - l[i].attr('x1')));
-                //Новая длина вектора
-                length = otstypText;
-                lenAB = Math.round(Math.sqrt(Math.pow(x - zbp.x, 2) + Math.pow(y - zbp.y, 2)));
-                length = length - lenAB;
-                //Новые координаты конца вектра учитывая новую длину
-                xz = Math.round(x + (x - zbp.x) / lenAB * length);
-                yz = Math.round(y + (y - zbp.y) / lenAB * length);
+                    //Новая длина вектора
+                    length = otstypText;
+                    lenAB = Math.round(Math.sqrt(Math.pow(x - zbp.x, 2) + Math.pow(y - zbp.y, 2)));
+                    length = length - lenAB;
+                    //Новые координаты конца вектра учитывая новую длину
+                    xz = Math.round(x + (x - zbp.x) / lenAB * length);
+                    yz = Math.round(y + (y - zbp.y) / lenAB * length);
 
-                txt.attr({ 'x': xz, 'y': yz });
-                txt.transform("r" + (180 + Snap.angle(l[i].attr('x2'), l[i].attr('y2'), l[i].attr('x1'), l[i].attr('y1'))) + "," + xz + ',' + yz);
+                    txt.attr({ 'x': xz, 'y': yz });
+                    txt.transform("r" + (180 + Snap.angle(l[i].attr('x2'), l[i].attr('y2'), l[i].attr('x1'), l[i].attr('y1'))) + "," + xz + ',' + yz);
+                }
+            }
+            // углы
+            else{
+                if (parseInt(l[i].attr('x2')) >= parseInt(l[i].attr('x1'))) {
+                    if(parseInt(l[i].attr('y1')) >= parseInt(l[i].attr('y2'))) {
+                        txt.attr({ 'x': (parseInt(l[i].attr('x2')) - dx), 'y': (parseInt(l[i].attr('y2')) + dy) });
+                    }
+                    else{
+                        txt.attr({ 'x': (parseInt(l[i].attr('x2')) - dx), 'y': (parseInt(l[i].attr('y2')) + dy) });
+                    }
+                }
+                else{
+                    if(parseInt(l[i].attr('y1')) >= parseInt(l[i].attr('y2'))) {
+                        txt.attr({ 'x': (parseInt(l[i].attr('x2')) - dx), 'y': (parseInt(l[i].attr('y2'))) });
+                    }
+                    else{
+                        txt.attr({ 'x': (parseInt(l[i].attr('x2')) - dx), 'y': (parseInt(l[i].attr('y2'))) });
+                    }
+                }
+                angleArr.push(txt);
             }
         }
         //Возвращаем массив с элементами текста
         return arrTxt;
     }
+
+    //Находит максимум в массиве
+    function maxOfArray(arr) {
+        return Math.max.apply(Math, arr);
+    }
+
+    //Находит минимум в массиве
+    function minOfArray(arr) {
+        return Math.min.apply(Math, arr);
+    }
+
+    /*
+    * центруем и масштабируем полученный рисунок
+    */
+    function imageCenterAndScale(){
+        var x = [];
+        var y = [];
+        for (var i = 0; i < gLines.length; i++) {
+            x.push(parseInt(gLines[i].attr('x1')));
+            x.push(parseInt(gLines[i].attr('x2')));
+            y.push(parseInt(gLines[i].attr('y1')));
+            y.push(parseInt(gLines[i].attr('y2')));
+        } 
+        var xMin = minOfArray(x);
+        var xMax = maxOfArray(x);
+        var yMin = minOfArray(y);
+        var yMax = maxOfArray(y);
+        var holstCenterX = S.node.clientWidth/2;
+        var holstCenterY = S.node.clientHeight/2;
+        var imageCenterX = (xMax - xMin) / 2;
+        var prirachX = holstCenterX - imageCenterX - xMin;
+        var imageCenterY = (yMax - yMin) / 2;
+        var prirachY = holstCenterY - imageCenterY - yMin;
+        // console.log(gLines);
+        for (var i = 0; i < gLines.length; i++) {
+            console.log(gLines[i]);
+            gLines[i].attr({ 'x1': (parseInt(gLines[i].attr('x1')) + prirachX)});
+            gLines[i].attr({ 'x2': (parseInt(gLines[i].attr('x2')) + prirachX)});
+            gLines[i].attr({ 'y1': (parseInt(gLines[i].attr('y1')) + prirachY)});
+            gLines[i].attr({ 'y2': (parseInt(gLines[i].attr('y2')) + prirachY)});
+        }
+        // console.log(angleArr);
+        for (var j = 0; j < angleLines.length; j++) {
+            console.log(angleLines[j]);
+            // console.log((parseInt(angleArr[j].attr('x1'))));
+            angleLines[j].attr({ 'x1': (parseInt(angleLines[j].attr('x1')) + prirachX)});
+            angleLines[j].attr({ 'x2': (parseInt(angleLines[j].attr('x2')) + prirachX)});
+            angleLines[j].attr({ 'y1': (parseInt(angleLines[j].attr('y1')) + prirachY)});
+            angleLines[j].attr({ 'y2': (parseInt(angleLines[j].attr('y2')) + prirachY)});
+        }
+        var imageW = xMax - xMin;
+        var imageH = yMax - yMin;
+        var xKoeff = S.node.clientWidth / imageW;
+        var yKoeff = S.node.clientHeight / imageH;
+        minK = Math.min(xKoeff, yKoeff) - 0.1;
+
+        // gLinesGroup.remove();
+        gLinesGroup.transform('s'+minK+','+minK+','+ S.node.clientWidth/2 + ',' + S.node.clientHeight/2 + '');
+    }
+    
 
 
 
@@ -702,6 +834,7 @@ function Draw() {
 
         //Конечая дуга
         var pth = S.path('M' + newX + ',' + newY + 'Q' + cnt_xz + ',' + cnt_yz + ',' + xz + ',' + yz + 'L' + xz2 + ',' + yz2).attr({ stroke: "black", fill: "transparent", strokeWidth: 2 });
+        pth.transform('s'+minK+','+minK+','+ S.node.clientWidth/2 + ',' + S.node.clientHeight/2 + '');
         return pth;
     }
 
@@ -722,18 +855,18 @@ function Draw() {
             if (topPainted) {
                 clrFront = "red";
                 clrBack = "grey";
-            }  
+            }
             if (botPainted) {
                 clrBack = "red";
                 clrFront = "grey";
-            }  
-            if (topPainted && botPainted){
+            }
+            if (topPainted && botPainted) {
                 clrFront = "red";
                 clrBack = "red";
-            } else if (!topPainted && !botPainted){
+            } else if (!topPainted && !botPainted) {
                 clrFront = "grey";
                 clrBack = "grey";
-            } 
+            }
             //Координаты обводки модели
             var arr = [];
             //Сама модель
@@ -744,10 +877,10 @@ function Draw() {
 
                 if (i == 0) {
                     points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 0));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 10));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 10));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 50));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
                 } else {
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 10));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
                 }
             }
 
@@ -823,15 +956,15 @@ function Draw() {
             var materialBack2 = new THREE.MeshBasicMaterial({ color: clrBack, side: THREE.FrontSide });
 
             //Устанавливаем индексы цветов для лиц
-            var count=1;
+            var count = 1;
             for (var i = 0; i < geom.faces.length; i++) {
-                if (count > 4){count = 1}
-                if (count <= 4) {                   
-                    geom.faces[i].materialIndex = count-1;
+                if (count > 4) { count = 1 }
+                if (count <= 4) {
+                    geom.faces[i].materialIndex = count - 1;
                     count++
                 }
             }
-            
+
             //Находим коробку в которой находится модель
             geom.computeBoundingBox();
             var center = new THREE.Vector3();
@@ -849,10 +982,10 @@ function Draw() {
             // Добавляем геометрию обводки модели на сцену
             scene.add(linePavement);
 
-            var mesh = new THREE.Mesh(geom, [materialFront1, materialFront2, materialBack1, materialBack2]); 
+            var mesh = new THREE.Mesh(geom, [materialFront1, materialFront2, materialBack1, materialBack2]);
             // Добавляем геометрию и материал на сцену
             scene.add(mesh);
-            
+
             //Показываем
             render();
 
