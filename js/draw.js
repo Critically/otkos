@@ -316,9 +316,12 @@ function Draw() {
     // Обработчик клика по элементу "Линия"
     var clickCallbackLine = function (event) {
         if (ConstrDraw.finished) {
+            console.log(gLines);
+            console.log(gLineLengths);
             //Старая длина отрезка
             var lenAB = Math.round(Math.sqrt(Math.pow(this.attr('x2') - this.attr('x1'), 2) + Math.pow(this.attr('y2') - this.attr('y1'), 2)));
             var length = prompt("Введите новую длинну...", "");
+            var textLength = length;
             //Проверяем на новую длину, она должна быть меньше максимальной что бы произвести увеличение или уменьшение отрезка
             var newLength = (ConstrDraw.lengthSumm - lenAB) + parseInt(length);
             if (newLength < maxLength) {
@@ -383,8 +386,12 @@ function Draw() {
                                 for (var z = 0; z < arrTxt.length; z++) {
                                     //Удаляем все старые тексты длин
                                     arrTxt[z].remove();
-                                }
+                                }                  
                                 arrTxt = drawText(gLines, 1);
+
+                                //Изменяем длину в массиве длинн
+                                gLineLengths[i] = parseInt(textLength);
+
                                 break;
                             }
                         }
@@ -393,6 +400,8 @@ function Draw() {
             } else {
                 console.log('Длина более ' + maxLength + 'мм.');
             }
+            //Масштабируем новые размеры
+            imageCenterAndScale();
         }
     };
 
@@ -918,11 +927,11 @@ function DrawRazvertka() {
     };
 
     this.drawRazvertka = function () {
-        Razvertka.drawImage(ConstrDraw.gLines, ConstrDraw.gLineLengths, ConstrDraw.lengthSumm);
+        Razvertka.drawImage(ConstrDraw.gLineLengths, ConstrDraw.lengthSumm);
     }
 
 
-    this.drawImage = function (lines, lengths, lengthSumm){       
+    this.drawImage = function (lengths, lengthSumm){       
         //Удаляем все
         S.clear();
         //Новый холст
@@ -939,14 +948,14 @@ function DrawRazvertka() {
             var newL;
             var bbox;
             var dx,dy;
-            var square_centerX,square_centerY ;
-            var oldY = 0;
+            var square_centerX, square_centerY;
+            var oldY = 10;
             var oldLen = 0;
-            var summ =0;
+            var summ = 0;
             //Проходим по всем линиям и берем длину каждой следующей линии
             for (var i = 0; i < lengths.length; i++) {
                 newL = Math.round(lengths[i]/2);
-                newY = parseInt(newY + newL); 
+                newY = parseInt(newY) + parseInt(newL); 
                 //Последнюю линию рсиовать не надо
                 if (i != lengths.length-1){
                     var line = S.line(x,newY,glob_width-110,newY).attr({stroke:"black"});
@@ -961,8 +970,8 @@ function DrawRazvertka() {
                 var txtRight = S.text(glob_width-100,newY,summ.toString()).attr({fontSize:14, font:"Calibri"}); 
                 bbox = txtCenter.getBBox();
                 //Находим длину половины текста
-                dx = Math.round(bbox.width / 2)+10;
-                dy = Math.round(bbox.height / 2);
+                dx = Math.round(bbox.width / 4)+10;
+                dy = Math.round(bbox.height / 4);
                 txtCenter.attr({ 'x': square_centerX-dx, 'y': square_centerY+dy });
                 oldY =  newY;
                 oldLen = summ;
