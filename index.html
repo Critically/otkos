@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Dasdasd</title>
+    <title>DEV</title>
     <meta charset="UTF-8">
     <script src="snap/snap.svg-min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -69,11 +69,6 @@
 </head>
 
 <body>
-<<<<<<< HEAD:okno.html
-    <!-- file:///C:/Users/root/Desktop/snap2/okno.html -->
-    <h1>asdasd</h1>
-=======
->>>>>>> dev:index.html
     <p>
         <input id="finish" type="button" value="Завершить рисование" onclick="ConstrDraw.drawFinish();" />
         <input id="resume" type="button" value="Очистить холст" onclick="reboot();" />
@@ -121,13 +116,13 @@
         var tabPanels = document.querySelectorAll(".tabContainer .tabPanel");
 
         function create3D() {
-            Scene3D.drawModel();
             showPanel(1, '#ea2c2c');
+            Scene3D.drawModel();
         }
 
         function createRazvertka(){
-            Razvertka.drawRazvertka();
             showPanel(2, '#ea2c2c');
+            Razvertka.drawRazvertka();
         }
 
 

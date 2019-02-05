@@ -82,8 +82,6 @@ function Draw() {
     //Массив с путями линий для проверки на пересечение
     var vectorPathes = [];
     var lastPath;
-    //Массив с линиями
-    var gLines = [];
     // группа линий
     var gLinesGroup = S.group();
     // массив с биссектрисами углов
@@ -778,18 +776,13 @@ function Draw() {
         var prirachX = holstCenterX - imageCenterX - xMin;
         var imageCenterY = (yMax - yMin) / 2;
         var prirachY = holstCenterY - imageCenterY - yMin;
-        // console.log(gLines);
         for (var i = 0; i < gLines.length; i++) {
-            console.log(gLines[i]);
             gLines[i].attr({ 'x1': (parseInt(gLines[i].attr('x1')) + prirachX)});
             gLines[i].attr({ 'x2': (parseInt(gLines[i].attr('x2')) + prirachX)});
             gLines[i].attr({ 'y1': (parseInt(gLines[i].attr('y1')) + prirachY)});
             gLines[i].attr({ 'y2': (parseInt(gLines[i].attr('y2')) + prirachY)});
         }
-        // console.log(angleArr);
         for (var j = 0; j < angleLines.length; j++) {
-            console.log(angleLines[j]);
-            // console.log((parseInt(angleArr[j].attr('x1'))));
             angleLines[j].attr({ 'x1': (parseInt(angleLines[j].attr('x1')) + prirachX)});
             angleLines[j].attr({ 'x2': (parseInt(angleLines[j].attr('x2')) + prirachX)});
             angleLines[j].attr({ 'y1': (parseInt(angleLines[j].attr('y1')) + prirachY)});
@@ -944,15 +937,35 @@ function DrawRazvertka() {
             var c = S.rect(x, y, glob_width-120, Math.round(lengthSumm/2)).attr({fill:"none", stroke:"black", strokeWidth:1});
             var newY = y;
             var newL;
+            var bbox;
+            var dx,dy;
+            var square_centerX,square_centerY ;
+            var oldY = 0;
+            var oldLen = 0;
+            var summ =0;
             //Проходим по всем линиям и берем длину каждой следующей линии
             for (var i = 0; i < lengths.length; i++) {
-                if (i == lengths.length-1){
-                    break;
-                }
                 newL = Math.round(lengths[i]/2);
                 newY = parseInt(newY + newL); 
-                var line = S.line(x,newY,glob_width-110,newY).attr({stroke:"black"});
-                var txt = S.text()
+                //Последнюю линию рсиовать не надо
+                if (i != lengths.length-1){
+                    var line = S.line(x,newY,glob_width-110,newY).attr({stroke:"black"});
+                }
+                //Находим x центр линии
+                square_centerX = parseInt(line.attr('x1'))+parseInt(line.attr('x2'))/2
+                square_centerY = oldY+(newY - oldY)/2;
+                //Текст по центру 
+                var txtCenter = S.text(square_centerX,newY,lengths[i].toString()).attr({fontSize:14, font:"Calibri"});
+                //Текст справа
+                var summ = parseInt(lengths[i]+oldLen); 
+                var txtRight = S.text(glob_width-100,newY,summ.toString()).attr({fontSize:14, font:"Calibri"}); 
+                bbox = txtCenter.getBBox();
+                //Находим длину половины текста
+                dx = Math.round(bbox.width / 2)+10;
+                dy = Math.round(bbox.height / 2);
+                txtCenter.attr({ 'x': square_centerX-dx, 'y': square_centerY+dy });
+                oldY =  newY;
+                oldLen = summ;
             } 
         }
     }
