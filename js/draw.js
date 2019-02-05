@@ -15,7 +15,7 @@ function Draw() {
     var Points = [0, 0, S.node.clientWidth, 0, S.node.clientWidth, S.node.clientHeight, 0, S.node.clientHeight];
     S.polygon().attr({
         points: Points,
-        fill: "#f0f0f0",
+        fill: "#f9f9f9",
         id: "canvas"
     });
 
@@ -36,6 +36,12 @@ function Draw() {
     //Массив с линиями
     var gLines = [];
     this.gLines = gLines;
+    //Массив с текстом углов
+    var gAngles = []
+    this.gAngles = gAngles;
+    //Массив с текстом длины линий
+    var gLineLengths = []
+    this.gLineLengths = gLineLengths;
     //Флаги о включенных линиях покраски
     var topPainted = false;
     var botPainted = false;
@@ -69,9 +75,10 @@ function Draw() {
     //Подтверждение конца рисования
     var finished = false;
     this.finished = finished;
-    //Отступ текста от линии
+    //максимальна возможная длина и текущая максималная
     var maxLength = 1250;
     var lengthSumm = 0;
+    this.lengthSumm = lengthSumm;
     //Массив с путями линий для проверки на пересечение
     var vectorPathes = [];
     var lastPath;
@@ -190,18 +197,22 @@ function Draw() {
             }
 
             //Суммируем длину всех отрезков
-            lengthSumm += lineLength;
+            ConstrDraw.lengthSumm += lineLength;
             //Делаем проверку на первую линию
             if ((vectorPathes.length == 0) && (angle == 0)) {
                 //Ставим углу любое число
                 angle = 1;
             }
             //Если не пересекаются то рисуем новый комплект
-            if ((!intersection) && (lengthSumm < maxLength) && (angle != 0)) {
+            if ((!intersection) && (ConstrDraw.lengthSumm < maxLength) && (angle != 0)) {
                 //Убираем пунктир
                 line.attr({ strokeDasharray: 0 });
                 //Сохраняем массив с линиями для перерисовки
                 gLines.push(line);
+                //Сохраняем массив с текстом углов
+                gAngles.push(angle);
+                //Сохраняем массив с текстом длин линий
+                gLineLengths.push(lineLength);
                 //Стираем предыдущий текст после каждого клика
                 if (textLength != undefined) {
                     textLength.remove();
@@ -229,7 +240,7 @@ function Draw() {
                     console.log('Пересечение.');
                 }
 
-                if (lengthSumm > maxLength) {
+                if (ConstrDraw.lengthSumm > maxLength) {
                     console.log('Длина более ' + maxLength + 'мм.');
                 }
 
@@ -243,7 +254,7 @@ function Draw() {
                 firstX = savedfirstX;
                 firstY = savedfirstY;
                 //Из общей длины вычитаем последний отрезок который выдал ошибку, так как физически его не нарисовали
-                lengthSumm -= lastlineLength;
+                ConstrDraw.lengthSumm -= lastlineLength;
             }
         }
         //Флаг о первом клике в холст, что можно начать пересчет при движении мышки...
@@ -268,9 +279,9 @@ function Draw() {
             var lenAB = Math.round(Math.sqrt(Math.pow(this.attr('x2') - this.attr('x1'), 2) + Math.pow(this.attr('y2') - this.attr('y1'), 2)));
             var length = prompt("Введите новую длинну...", "");
             //Проверяем на новую длину, она должна быть меньше максимальной что бы произвести увеличение или уменьшение отрезка
-            var newLength = (lengthSumm - lenAB) + parseInt(length);
+            var newLength = (ConstrDraw.lengthSumm - lenAB) + parseInt(length);
             if (newLength < maxLength) {
-                lengthSumm = newLength;
+                ConstrDraw.lengthSumm = newLength;
                 //Запоминаем координаты конца отрезка по которому кликнули
                 var lastx2 = parseInt(this.attr('x2'));
                 var lasty2 = parseInt(this.attr('y2'));
@@ -464,7 +475,7 @@ function Draw() {
         this.topPainted = false;
         this.botPainted = false;
         //Обновляем 3D сцену
-        Scene3D.drawScene3D(gLines);
+        Scene3D.drawScene3D(gLines, gLineLengths, gAngles);
     }
 
     this.drawPaintLines = function (pos) {
@@ -490,7 +501,7 @@ function Draw() {
                 if (linePaintedBot != undefined) { linePaintedBot.remove(); }
                 linePaintedBot = drawRedLines(gLines, 2);
             }
-            Scene3D.drawScene3D(gLines);
+            Scene3D.drawScene3D(gLines, gLineLengths, gAngles);
         }
     }
 
@@ -604,7 +615,7 @@ function Draw() {
             xz = Math.round((parseInt(l[i].attr('x1')) + parseInt(l[i].attr('x2'))) / 2);
             yz = Math.round((parseInt(l[i].attr('y1')) + parseInt(l[i].attr('y2'))) / 2);
             //находим длину линии
-            lineLength = Math.round(Math.sqrt(Math.pow(l[i].attr('x1') - l[i].attr('x2'), 2) + Math.pow(l[i].attr('y1') - l[i].attr('y2'), 2)));//l[i].getTotalLength();
+            lineLength = Math.round(Math.sqrt(Math.pow(l[i].attr('x1') - l[i].attr('x2'), 2) + Math.pow(l[i].attr('y1') - l[i].attr('y2'), 2)));
             //Находим середину линии
             halfLen = Math.round(lineLength / 2);
             //Ставим текст по центру линии
@@ -746,19 +757,18 @@ function Draw() {
 //Класс РАЗВЕРТКА
 function DrawRazvertka() {
     var S = Snap("#mysvg2");
-    //Эти три строчки для преобразования координат svg что бы координаты мышки были равны координатам svg холста а не всего экрана
-    var mySvg = $("#mysvg2")[0];
-    var pt = mySvg.createSVGPoint(); // create the point;
-    var transformed;
-
     this.S = S;
-    //холст
+    
+    //Холст
     var Points = [0, 0, glob_width, 0, glob_width, glob_height, 0, glob_height];
     S.polygon().attr({
         points: Points,
-        fill: "#f0f0f0",
+        fill: "#f9f9f9",
         id: "canvas"
     });
+
+    var x = 10;
+    var y = 10;
 
 
     this.run = function () {
@@ -770,6 +780,39 @@ function DrawRazvertka() {
         $('#mysvg2').remove();
         $("#pnl3").append("<svg id=mysvg2></svg>");
     };
+
+    this.drawRazvertka = function () {
+        Razvertka.drawImage(ConstrDraw.gLines, ConstrDraw.gLineLengths, ConstrDraw.lengthSumm);
+    }
+
+
+    this.drawImage = function (lines, lengths, lengthSumm){       
+        //Удаляем все
+        S.clear();
+        //Новый холст
+        S.polygon().attr({
+            points: Points,
+            fill: "#f9f9f9",
+            id: "canvas"
+        });
+
+        //Если закончили рисование то показываем развертку
+        if (ConstrDraw.finished) {
+            var c = S.rect(x, y, glob_width-120, Math.round(lengthSumm/2)).attr({fill:"none", stroke:"black", strokeWidth:1});
+            var newY = y;
+            var newL;
+            //Проходим по всем линиям и берем длину каждой следующей линии
+            for (var i = 0; i < lengths.length; i++) {
+                if (i == lengths.length-1){
+                    break;
+                }
+                newL = Math.round(lengths[i]/2);
+                newY = parseInt(newY + newL); 
+                var line = S.line(x,newY,glob_width-110,newY).attr({stroke:"black"});
+                var txt = S.text()
+            } 
+        }
+    }
 
 }
 
@@ -789,8 +832,9 @@ function Draw3D() {
     var SCENE_HEIGHT = glob_height;
     var scene = new THREE.Scene();
     var font;
+    var modelWidth = 60; // ширина модели по XZ
 
-    scene.background = new THREE.Color("#f0f0f0");
+    scene.background = new THREE.Color("#f9f9f9");
     var camera = new THREE.PerspectiveCamera(75, SCENE_WIDTH / SCENE_HEIGHT, 1, 1000);
     camera.position.set(15, 0, 40);
 
@@ -824,7 +868,7 @@ function Draw3D() {
     };
 
     this.drawModel = function () {
-        Scene3D.drawScene3D(ConstrDraw.gLines);
+        Scene3D.drawScene3D(ConstrDraw.gLines, ConstrDraw.gLineLengths, ConstrDraw.gAngles);
     }
 
     function loadFont() {
@@ -834,7 +878,7 @@ function Draw3D() {
         });
     }
 
-    this.drawScene3D = function (lines) {
+    this.drawScene3D = function (lines, lengths, angles) {
         //Удаляем старую модель
         while (scene.children.length > 0) {
             scene.remove(scene.children[0]);
@@ -843,18 +887,18 @@ function Draw3D() {
         if (ConstrDraw.finished) {
             if (ConstrDraw.topPainted) {
                 clrFront = "red";
-                clrBack = "grey";
+                clrBack = "#cbcbcb";
             }
             if (ConstrDraw.botPainted) {
                 clrBack = "red";
-                clrFront = "grey";
+                clrFront = "#cbcbcb";
             }
             if (ConstrDraw.topPainted && ConstrDraw.botPainted) {
                 clrFront = "red";
                 clrBack = "red";
             } else if (!ConstrDraw.topPainted && !ConstrDraw.botPainted) {
-                clrFront = "grey";
-                clrBack = "grey";
+                clrFront = "#cbcbcb";
+                clrBack = "#cbcbcb";
             }
             //Координаты обводки модели
             var arr = [];
@@ -862,14 +906,12 @@ function Draw3D() {
             var points = [];
             //Показываем линии 2D отрисовки внешние по Z
             for (var i = 0; i < lines.length; i++) {
-                //console.log(lines[i].attr('x1'), lines[i].attr('y1'), lines[i].attr('x2'), lines[i].attr('y2'));
-
                 if (i == 0) {
                     points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 0));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), 50));
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x1')), -lines[i].attr('y1'), modelWidth));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), modelWidth));
                 } else {
-                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), 50));
+                    points.push(new THREE.Vector3(parseInt(lines[i].attr('x2')), -lines[i].attr('y2'), modelWidth));
                 }
             }
 
@@ -903,9 +945,9 @@ function Draw3D() {
 
 
 
-            //Создаем геометрию обводки модели по точкам и добавля    
+            //Создаем геометрию обводки модели по точкам   
             var lineGeometry = new THREE.LineSegmentsGeometry().setPositions(arr);
-            var lineMaterial = new THREE.LineMaterial({ color: "black", linewidth: 1 });
+            var lineMaterial = new THREE.LineMaterial({ color: "black" });
             lineMaterial.resolution.set(SCENE_WIDTH, SCENE_HEIGHT);
             var linePavement = new THREE.LineSegments2(lineGeometry, lineMaterial);
 
@@ -956,6 +998,9 @@ function Draw3D() {
 
             //Находим коробку в которой находится модель
             geom.computeBoundingBox();
+            // Вычисляем нормали
+            geom.computeVertexNormals();
+
             var center = new THREE.Vector3();
             //Устанавливаем камеру по центру модели
             geom.boundingBox.getCenter(center);
@@ -976,27 +1021,27 @@ function Draw3D() {
             scene.add(mesh);
 
 
-            var textGeo = new THREE.TextGeometry('FUCK YOU', {
-                font: font,
-                size: 10,
-                height: 2,
-                curveSegments: 10,
-                weight: "normal",
-                bevelThickness: 1,
-                bevelSize: 0.3,
-                bevelSegments: 3,
-                bevelEnabled: false
-            });
-            textGeo.computeBoundingBox();
-            textGeo.computeVertexNormals();
+            //Формируем текст
+            for (var i = 0; i < lines.length; i++) {
+                var textGeo = new THREE.TextGeometry(lengths[i].toString(), {
+                    font: font,
+                    size: 3,
+                    height: 1,
+                    curveSegments: 20,
+                    weight: "regular"
+                });
 
-            var cubeMat = new THREE.MeshLambertMaterial({ color: 0xff3300 });
-            var text = new THREE.Mesh(textGeo, cubeMat);
+                textGeo.computeBoundingBox();
+                textGeo.computeVertexNormals();
 
-            scene.add(text);
+                var cubeMat = new THREE.MeshLambertMaterial({ color: "black" });
+                var text = new THREE.Mesh(textGeo, cubeMat);
+                text.position.x = parseInt(lines[i].attr('x1'));
+                text.position.y = -parseInt(lines[i].attr('y1'));
+                text.position.z = 60
 
-
-
+                scene.add(text);
+            }
 
 
             //Показываем
@@ -1006,7 +1051,7 @@ function Draw3D() {
         } else {
             //Показываем пустую сцену если finished = false
             scene = new THREE.Scene();
-            scene.background = new THREE.Color("#f0f0f0");
+            scene.background = new THREE.Color("#f9f9f9");
             render();
         }
     }
