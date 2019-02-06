@@ -388,14 +388,11 @@ function Draw() {
                                     arrTxt[z].remove();
                                 }                  
                                 arrTxt = drawText(gLines, 1);
-<<<<<<< HEAD
 
                                 //Изменяем длину в массиве длинн
                                 gLineLengths[i] = parseInt(textLength);
 
-=======
                                 imageCenterAndScale();
->>>>>>> 9e00e999d4f0b788a3c8977d5dcf4aa864f28cc7
                                 break;
                             }
                         }
