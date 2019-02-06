@@ -82,8 +82,6 @@ function Draw() {
     //Массив с путями линий для проверки на пересечение
     var vectorPathes = [];
     var lastPath;
-    //Массив с линиями
-    var gLines = [];
     // группа линий
     var gLinesGroup = S.group();
     // массив с биссектрисами углов
@@ -387,6 +385,7 @@ function Draw() {
                                     arrTxt[z].remove();
                                 }
                                 arrTxt = drawText(gLines, 1);
+                                imageCenterAndScale();
                                 break;
                             }
                         }
@@ -780,7 +779,6 @@ function Draw() {
         var prirachY = holstCenterY - imageCenterY - yMin;
         // console.log(gLines);
         for (var i = 0; i < gLines.length; i++) {
-            console.log(gLines[i]);
             gLines[i].attr({ 'x1': (parseInt(gLines[i].attr('x1')) + prirachX)});
             gLines[i].attr({ 'x2': (parseInt(gLines[i].attr('x2')) + prirachX)});
             gLines[i].attr({ 'y1': (parseInt(gLines[i].attr('y1')) + prirachY)});
@@ -788,8 +786,6 @@ function Draw() {
         }
         // console.log(angleArr);
         for (var j = 0; j < angleLines.length; j++) {
-            console.log(angleLines[j]);
-            // console.log((parseInt(angleArr[j].attr('x1'))));
             angleLines[j].attr({ 'x1': (parseInt(angleLines[j].attr('x1')) + prirachX)});
             angleLines[j].attr({ 'x2': (parseInt(angleLines[j].attr('x2')) + prirachX)});
             angleLines[j].attr({ 'y1': (parseInt(angleLines[j].attr('y1')) + prirachY)});
@@ -799,7 +795,7 @@ function Draw() {
         var imageH = yMax - yMin;
         var xKoeff = S.node.clientWidth / imageW;
         var yKoeff = S.node.clientHeight / imageH;
-        minK = Math.min(xKoeff, yKoeff) - 0.1;
+        minK = Math.min(xKoeff, yKoeff) - 0.2;
 
         // gLinesGroup.remove();
         gLinesGroup.transform('s'+minK+','+minK+','+ S.node.clientWidth/2 + ',' + S.node.clientHeight/2 + '');
@@ -993,7 +989,7 @@ function Draw3D() {
     controls.target = new THREE.Vector3(10, 0, 10);
     controls.update();
 
-    loadFont();
+  //  loadFont();
     render();
 
     function render() {
@@ -1165,26 +1161,26 @@ function Draw3D() {
 
 
             //Формируем текст
-            for (var i = 0; i < lines.length; i++) {
-                var textGeo = new THREE.TextGeometry(lengths[i].toString(), {
-                    font: font,
-                    size: 3,
-                    height: 1,
-                    curveSegments: 20,
-                    weight: "regular"
-                });
+            // for (var i = 0; i < lines.length; i++) {
+            //     var textGeo = new THREE.TextGeometry(lengths[i].toString(), {
+            //         font: font,
+            //         size: 3,
+            //         height: 1,
+            //         curveSegments: 20,
+            //         weight: "regular"
+            //     });
 
-                textGeo.computeBoundingBox();
-                textGeo.computeVertexNormals();
+            //     textGeo.computeBoundingBox();
+            //     textGeo.computeVertexNormals();
 
-                var cubeMat = new THREE.MeshLambertMaterial({ color: "black" });
-                var text = new THREE.Mesh(textGeo, cubeMat);
-                text.position.x = parseInt(lines[i].attr('x1'));
-                text.position.y = -parseInt(lines[i].attr('y1'));
-                text.position.z = 60
+            //     var cubeMat = new THREE.MeshLambertMaterial({ color: "black" });
+            //     var text = new THREE.Mesh(textGeo, cubeMat);
+            //     text.position.x = parseInt(lines[i].attr('x1'));
+            //     text.position.y = -parseInt(lines[i].attr('y1'));
+            //     text.position.z = 60
 
-                scene.add(text);
-            }
+            //     scene.add(text);
+            // }
 
 
             //Показываем
