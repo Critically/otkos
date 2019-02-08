@@ -85,7 +85,7 @@ function Draw() {
     //Массив с путями линий для проверки на пересечение
     var vectorPathes = [];
     var lastPath;
-    // группа линий
+    //Группа линий для масшабирования и центрирования рисунка
     var gLinesGroup = S.group();
     // массив с биссектрисами углов
     var angleLines = [];
@@ -1025,9 +1025,6 @@ function DrawRazvertka() {
         id: "canvas"
     });
 
-    var x = 10;
-    var y = 10;
-
 
     this.run = function () {
         console.log('Run razvertka');
@@ -1043,6 +1040,15 @@ function DrawRazvertka() {
         Razvertka.drawImage(ConstrDraw.gLineLengths, ConstrDraw.lengthSumm);
     }
 
+    //Находит максимум в массиве
+    function maxOfArray(arr) {
+        return Math.max.apply(Math, arr);
+    }
+
+    //Находит минимум в массиве
+    function minOfArray(arr) {
+        return Math.min.apply(Math, arr);
+    }
 
     this.drawImage = function (lengths, lengthSumm) {
         //Удаляем все
@@ -1056,7 +1062,8 @@ function DrawRazvertka() {
 
         //Если закончили рисование то показываем развертку
         if (ConstrDraw.finished) {
-            var c = S.rect(x, y, glob_width - 120, Math.round(lengthSumm / 2)).attr({ fill: "none", stroke: "black", strokeWidth: 1 });
+            var x = 10;
+            var y = 10;
             var newY = y;
             var newL;
             var bbox;
@@ -1065,22 +1072,41 @@ function DrawRazvertka() {
             var oldY = 10;
             var oldLen = 0;
             var summ = 0;
+            var lines = [];
+            var texts = [];
+            //Группа линий для масшабирования и центрирования развертки
+            var gLinesGroupR = S.group();
+
+            //Прямоугольник каркас
+            var c1 = S.line(x, y, x + (glob_width - 120), y).attr({ stroke: "black", strokeWidth: 1 });
+            lines.push(c1);
+            var c2 = S.line(x + (glob_width - 120), y, x + (glob_width - 120), y + lengthSumm/2).attr({ stroke: "black", strokeWidth: 1 });
+            lines.push(c2);
+            var c3 = S.line(x + (glob_width - 120), y + lengthSumm/2, x, y + lengthSumm/2).attr({ stroke: "black", strokeWidth: 1 });
+            lines.push(c3);
+            var c4 = S.line(x, y + lengthSumm/2, x, y).attr({ stroke: "black", strokeWidth: 1 });
+            lines.push(c4);
+
             //Проходим по всем линиям и берем длину каждой следующей линии
             for (var i = 0; i < lengths.length; i++) {
                 newL = Math.round(lengths[i] / 2);
+                //newL = lengths[i];
                 newY = parseInt(newY) + parseInt(newL);
                 //Последнюю линию рсиовать не надо
                 if (i != lengths.length - 1) {
                     var line = S.line(x, newY, glob_width - 110, newY).attr({ stroke: "black" });
+                    lines.push(line);
                 }
                 //Находим x центр линии
                 square_centerX = parseInt(line.attr('x1')) + parseInt(line.attr('x2')) / 2
                 square_centerY = oldY + (newY - oldY) / 2;
                 //Текст по центру 
                 var txtCenter = S.text(square_centerX, newY, lengths[i].toString()).attr({ fontSize: 14, font: "Calibri" });
+                texts.push(txtCenter);
                 //Текст справа
                 var summ = parseInt(lengths[i] + oldLen);
                 var txtRight = S.text(glob_width - 100, newY, summ.toString()).attr({ fontSize: 14, font: "Calibri" });
+                texts.push(txtRight);
                 bbox = txtCenter.getBBox();
                 //Находим длину половины текста
                 dx = Math.round(bbox.width / 4) + 10;
@@ -1089,12 +1115,57 @@ function DrawRazvertka() {
                 oldY = newY;
                 oldLen = summ;
             }
+
+            var x1 = [];
+            var y1 = [];
+            for (var i = 0; i < lines.length; i++) {
+                x1.push(parseInt(lines[i].attr('x1')));
+                x1.push(parseInt(lines[i].attr('x2')));
+                y1.push(parseInt(lines[i].attr('y1')));
+                y1.push(parseInt(lines[i].attr('y2')));
+            }
+
+            var xMin = minOfArray(x1);
+            var xMax = maxOfArray(x1);
+            var yMin = minOfArray(y1);
+            var yMax = maxOfArray(y1);         
+            var holstCenterX = S.node.clientWidth / 2;
+            var holstCenterY = S.node.clientHeight / 2;
+            var imageCenterX = (xMax - xMin) / 2;
+            var prirachX = holstCenterX - imageCenterX - xMin;
+            var imageCenterY = (yMax - yMin) / 2;
+            var prirachY = holstCenterY - imageCenterY - yMin;
+            for (var i = 0; i < lines.length; i++) {
+                lines[i].attr({ 'x1': (parseInt(lines[i].attr('x1')) + prirachX) });
+                lines[i].attr({ 'x2': (parseInt(lines[i].attr('x2')) + prirachX) });
+                lines[i].attr({ 'y1': (parseInt(lines[i].attr('y1')) + prirachY) });
+                lines[i].attr({ 'y2': (parseInt(lines[i].attr('y2')) + prirachY) });
+            }
+
+            for (var i = 0; i < texts.length; i++) {
+                texts[i].attr({ 'x': (parseInt(texts[i].attr('x')) + prirachX) });
+                texts[i].attr({ 'y': (parseInt(texts[i].attr('y')) + prirachY) });
+            }
+
+            var imageW = xMax - xMin;
+            var imageH = yMax - yMin;
+            var xKoeff = S.node.clientWidth / imageW;
+            var yKoeff = S.node.clientHeight / imageH;
+            var minK = Math.min(xKoeff, yKoeff) - 0.2;
+
+            gLinesGroupR.remove();
+            gLinesGroupR = S.group();
+            for (var i = 0; i < texts.length; i++) {
+                gLinesGroupR.append(lines[i]);
+                gLinesGroupR.append(texts[i]);
+            }
+
+         gLinesGroupR.transform('s' + minK + ',' + minK + ',' + S.node.clientWidth / 2 + ',' + S.node.clientHeight / 2 + '');
+
         }
     }
 
 }
-
-
 
 
 
