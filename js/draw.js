@@ -46,15 +46,13 @@ function Draw() {
     var gLineLengths = []
     this.gLineLengths = gLineLengths;
     //Флаги о включенных линиях покраски
-    var topPainted = false;
-    var botPainted = false;
-    this.topPainted = topPainted;
-    this.botPainted = botPainted;
+    this.topPainted = false;
+    this.botPainted = false;
     //Флаги о включенных подгибах
-    var podgibLeftTop = false;
-    var podgibLeftBottom = false;
-    var podgibRightTop = false;
-    var podgibRightBottom = false;
+    this.podgibLeftTop = false;
+    this.podgibLeftBottom = false;
+    this.podgibRightTop = false;
+    this.podgibRightBottom = false;
     //Координаты мыши, переприсваиваются всегда при движении по холсту S
     var mouseX;
     var mouseY;
@@ -89,14 +87,6 @@ function Draw() {
     var gLinesGroup = S.group();
     // массив с биссектрисами углов
     var angleLines = [];
-    //Флаги о включенных линиях покраски
-    var topPainted = false;
-    var botPainted = false;
-    //Флаги о включенных подгибах
-    var podgibLeftTop = false;
-    var podgibLeftBottom = false;
-    var podgibRightTop = false;
-    var podgibRightBottom = false;
     //Линии подгиба
     var linePodgibLeft;
     var linePodgibRight;
@@ -355,8 +345,6 @@ function Draw() {
     //Создаем новое рисование или продолжаем 
     clickCallbackSnap = function (event) {
         if (!ConstrDraw.finished) {
-            //Убираем курсор
-            // document.body.style.cursor = 'none';
             //Создаем новый комплект
             createNew();
         }
@@ -433,18 +421,18 @@ function Draw() {
                                 }
                                 //Перерисовываем подгибы если были включены
                                 //Подгиб слева
-                                if (podgibLeftTop) {
+                                if (ConstrDraw.podgibLeftTop) {
                                     if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
                                     linePodgibLeft = drawPodgibs(gLines[0], 1, 'left');
-                                } else if (podgibLeftBottom) {
+                                } else if (ConstrDraw.podgibLeftBottom) {
                                     if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
                                     linePodgibLeft = drawPodgibs(gLines[0], 2, 'left');
                                 }
                                 //Подгиб справа
-                                if (podgibRightTop) {
+                                if (ConstrDraw.podgibRightTop) {
                                     if (linePodgibRight != undefined) { linePodgibRight.remove(); }
                                     linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 1, 'right');
-                                } else if (podgibRightBottom) {
+                                } else if (ConstrDraw.podgibRightBottom) {
                                     if (linePodgibRight != undefined) { linePodgibRight.remove(); }
                                     linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 2, 'right');
                                 }
@@ -571,32 +559,35 @@ function Draw() {
 
     this.removeRightPodgibs = function () {
         if (linePodgibRight != undefined) { linePodgibRight.remove(); }
-        podgibRightTop = false;
-        podgibRightBottom = false;
+        this.podgibRightTop = false;
+        this.podgibRightBottom = false;
+        Razvertka.drawRazvertka();
     }
 
     this.drawPodgibRightLines = function (pos) {
         if (this.finished) {
             //Подгиб справа
             if (pos == 1) {
-                podgibRightTop = true;
-                podgibRightBottom = false;
+                this.podgibRightTop = true;
+                this.podgibRightBottom = false;
                 if (linePodgibRight != undefined) { linePodgibRight.remove(); }
                 linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 1, 'right');
             } else if (pos == 2) {
-                podgibRightTop = false;
-                podgibRightBottom = true;
+                this.podgibRightTop = false;
+                this.podgibRightBottom = true;
                 if (linePodgibRight != undefined) { linePodgibRight.remove(); }
                 linePodgibRight = drawPodgibs(gLines[gLines.length - 1], 2, 'right');
             }
+            Razvertka.drawRazvertka();
         }
     }
 
 
     this.removeLeftPodgibs = function () {
         if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
-        podgibLeftTop = false;
-        podgibLeftBottom = false;
+        this.podgibLeftTop = false;
+        this.podgibLeftBottom = false;
+        Razvertka.drawRazvertka();
     }
 
 
@@ -604,16 +595,17 @@ function Draw() {
         if (this.finished) {
             //Подгиб слева
             if (pos == 1) {
-                podgibLeftTop = true;
-                podgibLeftBottom = false;
+                this.podgibLeftTop = true;
+                this.podgibLeftBottom = false;
                 if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
                 linePodgibLeft = drawPodgibs(gLines[0], 1, 'left');
             } else if (pos == 2) {
-                podgibLeftTop = false;
-                podgibLeftBottom = true;
+                this.podgibLeftTop = false;
+                this.podgibLeftBottom = true;
                 if (linePodgibLeft != undefined) { linePodgibLeft.remove(); }
                 linePodgibLeft = drawPodgibs(gLines[0], 2, 'left');
             }
+            Razvertka.drawRazvertka();
         }
     }
 
@@ -785,7 +777,6 @@ function Draw() {
             else {
                 txt = S.text(xz, yz, Math.round(l[i].attr('angle')) + "\u00B0").attr({ fontFamily: 'Calibri', fontSize: 10 });
             }
-            //gLinesGroup.append(txt);
             arrTxt.push(txt);
             bbox = txt.getBBox();
             //Находим середину текста
@@ -907,7 +898,6 @@ function Draw() {
         //Выводим текст углов
         arrTxtAngles = drawText(angleLines, 2);
 
-        //var gLinesGroup = S.group();
         gLinesGroup.remove();
         gLinesGroup = S.group();
         for (var i = 0; i < gLines.length; i++) {
@@ -1050,7 +1040,7 @@ function DrawRazvertka() {
         return Math.min.apply(Math, arr);
     }
 
-    this.drawImage = function (lengths, lengthSumm) {
+    this.drawImage = function (lengthsIN, lengthSummIN) {
         //Удаляем все
         S.clear();
         //Новый холст
@@ -1059,6 +1049,12 @@ function DrawRazvertka() {
             fill: "#f9f9f9",
             id: "canvas"
         });
+
+        var lengths = []
+        var lengthSumm = lengthSummIN;
+        for (var i = 0; i < lengthsIN.length; i++) {
+            lengths.push(lengthsIN[i]);
+        }
 
         //Если закончили рисование то показываем развертку
         if (ConstrDraw.finished) {
@@ -1074,17 +1070,31 @@ function DrawRazvertka() {
             var summ = 0;
             var lines = [];
             var texts = [];
+
+
+            //Добавляем подгибы если включены
+            if ((ConstrDraw.podgibLeftBottom) || (ConstrDraw.podgibLeftTop)) {
+                lengthSumm = lengthSumm + 15;
+                lengths.unshift(15);
+            }
+
+            //Добавляем подгибы если включены
+            if ((ConstrDraw.podgibRightBottom) || (ConstrDraw.podgibRightTop)) {
+                lengthSumm = lengthSumm + 15;
+                lengths.push(15);
+            }
+
+
             //Группа линий для масшабирования и центрирования развертки
             var gLinesGroupR = S.group();
-
             //Прямоугольник каркас
             var c1 = S.line(x, y, x + (glob_width - 120), y).attr({ stroke: "black", strokeWidth: 1 });
             lines.push(c1);
-            var c2 = S.line(x + (glob_width - 120), y, x + (glob_width - 120), y + lengthSumm/2).attr({ stroke: "black", strokeWidth: 1 });
+            var c2 = S.line(x + (glob_width - 120), y, x + (glob_width - 120), y + lengthSumm / 2).attr({ stroke: "black", strokeWidth: 1 });
             lines.push(c2);
-            var c3 = S.line(x + (glob_width - 120), y + lengthSumm/2, x, y + lengthSumm/2).attr({ stroke: "black", strokeWidth: 1 });
+            var c3 = S.line(x + (glob_width - 120), y + lengthSumm / 2, x, y + lengthSumm / 2).attr({ stroke: "black", strokeWidth: 1 });
             lines.push(c3);
-            var c4 = S.line(x, y + lengthSumm/2, x, y).attr({ stroke: "black", strokeWidth: 1 });
+            var c4 = S.line(x, y + lengthSumm / 2, x, y).attr({ stroke: "black", strokeWidth: 1 });
             lines.push(c4);
 
             //Проходим по всем линиям и берем длину каждой следующей линии
@@ -1116,6 +1126,7 @@ function DrawRazvertka() {
                 oldLen = summ;
             }
 
+            //Рассчеты для центрирования и масштабирования рисунка
             var x1 = [];
             var y1 = [];
             for (var i = 0; i < lines.length; i++) {
@@ -1128,13 +1139,14 @@ function DrawRazvertka() {
             var xMin = minOfArray(x1);
             var xMax = maxOfArray(x1);
             var yMin = minOfArray(y1);
-            var yMax = maxOfArray(y1);         
+            var yMax = maxOfArray(y1);
             var holstCenterX = S.node.clientWidth / 2;
             var holstCenterY = S.node.clientHeight / 2;
             var imageCenterX = (xMax - xMin) / 2;
             var prirachX = holstCenterX - imageCenterX - xMin;
             var imageCenterY = (yMax - yMin) / 2;
             var prirachY = holstCenterY - imageCenterY - yMin;
+
             for (var i = 0; i < lines.length; i++) {
                 lines[i].attr({ 'x1': (parseInt(lines[i].attr('x1')) + prirachX) });
                 lines[i].attr({ 'x2': (parseInt(lines[i].attr('x2')) + prirachX) });
@@ -1160,7 +1172,11 @@ function DrawRazvertka() {
                 gLinesGroupR.append(texts[i]);
             }
 
-         gLinesGroupR.transform('s' + minK + ',' + minK + ',' + S.node.clientWidth / 2 + ',' + S.node.clientHeight / 2 + '');
+            gLinesGroupR.transform('s' + minK + ',' + minK + ',' + S.node.clientWidth / 2 + ',' + S.node.clientHeight / 2 + '');
+
+            for (var i = 0; i < texts.length; i++) {
+                texts[i].attr({ 'fontSize': 20 });
+            }
 
         }
     }
