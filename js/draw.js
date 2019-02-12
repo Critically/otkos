@@ -217,8 +217,10 @@ function Draw() {
                 //Сохраняем массив с линиями для перерисовки
                 //gLinesGroup.append(line);
                 gLines.push(line);
-                //Сохраняем массив с текстом углов
-                gAngles.push(angle);
+                //Сохраняем массив с текстом углов не берем первый угол
+                if (angle != 1){
+                    gAngles.push(angle);
+                }
                 //Сохраняем массив с текстом длин линий
                 gLineLengths.push(lineLength);
                 //Стираем предыдущий текст после каждого клика
@@ -337,7 +339,7 @@ function Draw() {
             result.x *= (len1 + len2) / 2;
             result.y *= (len1 + len2) / 2;
 
-            var biss = S.line(p2x, p2y, p2x + result.x, p2y + result.y).attr({ stroke: 'none', strokeWidth: "1", angle: angle });
+            var biss = S.line(p2x, p2y, p2x + result.x, p2y + result.y).attr({ stroke: 'none', strokeWidth: "1"});
             angleLines.push(biss);
         }
     }
@@ -775,7 +777,7 @@ function Draw() {
                 txt = S.text(xz, yz, Math.round(lineLength)).attr({ fontFamily: 'Calibri', fontSize: 12 });
             }
             else {
-                txt = S.text(xz, yz, Math.round(l[i].attr('angle')) + "\u00B0").attr({ fontFamily: 'Calibri', fontSize: 10 });
+                txt = S.text(xz, yz, gAngles[i] + "\u00B0").attr({ fontFamily: 'Calibri', fontSize: 10 });
             }
             arrTxt.push(txt);
             bbox = txt.getBBox();
