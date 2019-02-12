@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>окно</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="snap/snap.svg-min.js"></script>
+    <script src="jquery/jquery-3.3.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="js/construction.js"></script>
+    <script src="js/draw.js"></script>
+    <script src="js/control.js"></script>
+    <script src="3d/three.min.js"></script>
+    <script src="3d/TrackballControls.js"></script>
+
+    <style>
+        .text-size-line-rect {
+            cursor: pointer;
+        }
+
+        /*            .size-line-text-vertical{
+                -moz-transform: rotate(90deg);  Для Firefox 
+                -ms-transform: rotate(90deg);  Для IE 
+                -webkit-transform: rotate(90deg);  Для Safari, Chrome, iOS 
+                -o-transform: rotate(90deg);  Для Opera 
+                transform: rotate(90deg);
+            }
+
+            .size-line-text-vertical{
+                visibility: hidden;
+            }
+
+
+            div {
+                position: absolute;
+                width: 2em;
+                height: 2em;
+                background: blue;
+            }*/
+
+
+
+        #size-line-text {
+            width: 50px;
+            display: none;
+            position: absolute;
+        }
+    </style>
+
+</head>
+
+<body>
+
+
+
+
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="width:220; height:220;">
+        <path d="" id="arc" fill="none" stroke="red" stroke-width="2" />
+    </svg>
+<script>
+
+
+// Snap.plugin(function (Snap, Element, Paper, global, Fragment) {
+//     // Snap.newmethod = function () {};
+//     // Element.prototype.newmethod = function () {};
+//     // Paper.prototype.newmethod = function () {};
+//     Element.prototype.circlePath = function(cx,cy,r) {
+//         var p = "M" + cx + "," + cy;
+//         p += "m" + -r + ",0";
+//         p += "a" + r + "," + r + " 0 1,0 " + (r*2) +",0";
+//         p += "a" + r + "," + r + " 0 1,0 " + -(r*2) + ",0";
+//         return this.path(p, cx, cy );
+//     };
+// });
+
+//     Snap.plugin( function( Snap, Element, Paper, global ) {
+//         Paper.prototype.circlePath = function(cx,cy,r) {
+//         var p = "M" + cx + "," + cy;
+//         p += "m" + -r + ",0";
+//         p += "a" + r + "," + r + " 0 1,0 " + (r*2) +",0";
+//         p += "a" + r + "," + r + " 0 1,0 " + -(r*2) + ",0";
+//         return this.path(p, cx, cy );
+
+//                 };
+// });
+
+// var s = Snap("#svgout");
+
+// var cp = s.circlePath(100,100,100).attr({ fill: "none", stroke: "red" });
+// var cp2 = s.circlePath(150,150,100).attr({ fill: "none", stroke: "blue" });
+// var cp3 = s.circlePath(100,100,100).attr({ fill: "none", stroke: "green" });
+// var intersects = Snap.path.intersection(cp,cp2);
+
+// var intersects2 = Snap.path.intersection(cp,cp3);
+
+// intersects.forEach( function( el ) {
+//         s.circle( el.x, el.y, 10 );
+// } );
+
+
+
+
+
+</script>
+
+
+
+</body>
+
+
+<script>
+    function myArc(cx, cy, radius, max) {
+        var circle = document.getElementById("arc");
+        var e = circle.getAttribute("d");
+        var d = " M " + (cx + radius) + " " + cy;
+        var angle = 0;
+        window.timer = window.setInterval(
+            function () {
+                var radians = angle * (Math.PI / 180);  // convert degree to radians
+                var x = cx + Math.cos(radians) * radius;
+                var y = cy + Math.sin(radians) * radius;
+
+                d += " L " + x + " " + y;
+                circle.setAttribute("d", d)
+                if (angle == max) window.clearInterval(window.timer);
+                angle++;
+            }
+            , 50)
+    }
+
+    myArc(110, 110, 100, 180);
+
+</script>
+
+
+</html>
