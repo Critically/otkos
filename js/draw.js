@@ -196,7 +196,7 @@ function Draw() {
                                 }
                             }, Object.create(null));
                             //Проверяем, не является ли точка пересечения общей точкой
-                            if ((result[0].x != firstX) || (result[0].y != firstY)) {
+                            if ((result[0].x != Math.round(firstX)) || (result[0].y != Math.round(firstY))) {
                                 intersection = true;
                                 //Если нашли хоть одно пересечение выходим, нет смысла искать дальше
                                 break;
