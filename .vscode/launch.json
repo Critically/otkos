@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost/snap2/",
+            "url": "file:///C:/Users/root/Desktop/Otkos/otkos/index.html",
             "webRoot": "${workspaceFolder}"
         }
     ]
